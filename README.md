@@ -1,181 +1,115 @@
-# tTek Language (v0.1)
+# tTek
 
-tTek is a low-level reactive programming language that compiles directly to native machine code via LLVM.
-It replaces traditional polling loops with declarative rules (`rule ... when ...`), making it suitable for embedded systems, real-time control, drivers, and performance-critical applications.
+A compiled, statically typed language built on LLVM. The main idea is replacing polling loops with declarative rules — you describe *when* something should happen, and the runtime handles the rest.
 
-## Repository
+Built this as a personal project to experiment with LLVM and language design. Works on Windows (MSYS2/MinGW) and Linux.
 
-[https://github.com/RobEst0906/tTek-language](https://github.com/RobEst0906/tTek-language)
+## What it looks like
 
-## Why tTek?
+```ttek
+init {
+    mem temperature: i32 = 22;
+    mem ac_on: i32 = 0;
+    print("System started\n");
+}
 
-- Reactive rules – describe *when* something should happen, not how to poll for it.
-- Low-level control – manual memory management, pointers, bitwise operations.
-- No intermediate C – the LLVM backend generates native object files, linked directly into an executable.
-- Static typing with explicit sizes (`i32`, `u64`, `f32`, `ptr`).
-- Minimal, unique syntax – familiar keywords but a fresh, declarative flow.
+rule too_hot when temperature > 25 && ac_on == 0 {
+    ac_on = 1;
+    print("AC turned on\n");
+}
 
-## Is tTek an esoteric language?
+rule cooled_down when temperature <= 22 && ac_on == 1 {
+    ac_on = 0;
+    print("AC turned off\n");
+}
 
-No. tTek is a practical, compiled language designed for systems programming. Its rule-based model comes from real-world paradigms like event-driven and reactive systems (similar to Esterel or synchronous languages), but applied to low-level code. The syntax may look unusual compared to C, but it is not a joke or a puzzle – it compiles to efficient native code through LLVM and gives the programmer full control over memory and execution.
+rule shutdown when temperature > 40 {
+    print("Critical temp, shutting down\n");
+    halt;
+}
+```
 
-## Features
+## Building
 
-- Global and local variables (`mem`, `reg`)
-- `init` block – runs once at startup
-- Rules with `when`, `every`, `priority`, `atomic`
-- Functions (`fn`) with parameters and return types
-- Expressions: arithmetic, comparisons, logical (`and`/`or`/`not`), function calls
-- Statements: `if`/`else`, `while`, `return`, `halt`, `nop`, `trigger`, inline assembly (`asm`)
-- Automatic mapping of `print` to `printf`
-- Cross-platform compilation (via LLVM)
-
-## Dependencies (to build the compiler)
-
-- A C++17 compiler (GCC 9+, Clang 7+, or MSVC 2019+)
-- LLVM 21 (including development headers and libraries)
-- CMake 3.16 or newer
-- (Optional) MinGW-w64 or MSYS2 UCRT64 environment on Windows
-
-On MSYS2 UCRT64 you can install everything with:
+**Windows (MSYS2 UCRT64):**
 
 ```bash
 pacman -S mingw-w64-ucrt-x86_64-llvm mingw-w64-ucrt-x86_64-gcc cmake make
-Building the tTek compiler
-Clone the repository.
+```
 
-Create a build directory and run CMake:
-
-bash
+```bash
+git clone https://github.com/RobEst0906/tTek-language.git
+cd tTek-language
 mkdir build && cd build
 cmake .. -G "MinGW Makefiles"
 mingw32-make
-(On Linux/macOS use cmake .. && make)
+```
 
-The executable ttek_compiler (or ttek_compiler.exe) will be placed in the build folder.
+**Linux (Ubuntu/Debian):**
 
-Compiling and running a tTek program
-Use the compiler directly:
+```bash
+sudo apt install build-essential cmake llvm-dev git
+git clone https://github.com/RobEst0906/tTek-language.git
+cd tTek-language
+mkdir build && cd build
+cmake ..
+make
+```
 
-bash
+## Compiling a tTek file
+
+On Windows there's a batch script:
+```bat
+.\compile.bat examples\smart_home.ttek
+```
+
+Or manually:
+```bash
 ./build/ttek_compiler examples/hello.ttek
-This produces an object file (.o) and automatically links it into an executable (.exe on Windows). Then run the executable:
+./examples/hello
+```
 
-bash
-./examples/hello.exe
-Alternatively, use the provided compile.bat (Windows) or a simple shell script to compile and run in one step:
+## Language basics
 
-bash
-compile.bat examples/smart_home.ttek
-Syntax overview (v0.1)
-Hello World
- 
-init {
-    print("Hello World\n");
-}
-Variables and types
- 
+**Variables** — `mem` for regular, `reg` for register-hint:
+```ttek
 mem counter: i32 = 0;
 reg status: u8;
-ptr buffer: u8 = null;
-Types: u8, u16, u32, u64, i8, i16, i32, i64, f32, f64, ptr, arrays (type[size]), void.
+```
 
-Rules
+Types: `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`, `f32`, `f64`, `ptr`
 
-rule tick every "1s" when counter < 100 {
-    counter = counter + 1;
-    print("Tick: %d\n", counter);
+**Rules:**
+```ttek
+rule name every "1s" when condition {
+    // body
 }
+```
+`every` and `priority` are optional. Rules run in a loop; when the condition is true, the body executes.
 
-rule alarm when counter >= 100 {
-    print("Alarm!\n");
-    halt;
-}
-Rules support optional priority, atomic, and every (time interval). Conditions may use any boolean expression. The runtime evaluates rules continuously; when a condition becomes true, the body executes.
-
-Functions
- 
+**Functions:**
+```ttek
 fn add(a: i32, b: i32): i32 {
     return a + b;
 }
-Control flow
-if/else, while, return, halt, nop, trigger, inline assembly (asm { ... }).
+```
 
-Full example: Smart Home simulation
-See examples/smart_home.ttek for a realistic reactive system with multiple rules, timers, and state management.
+**Control flow:** `if`/`else`, `while`, `return`, `halt`, `sleep(ms)`
 
-Project structure
- 
-tTek/
-├── CMakeLists.txt          # Build system configuration
-├── compile.bat             # Convenience script (Windows)
-├── README.md
-├── examples/               # tTek source files
-│   ├── hello.ttek
-│   ├── smart_home.ttek
-│   └── etc
-└── src/                    # Compiler source code
-    ├── main.cpp            # Entry point
-    ├── lexer/              # Lexer (Token.hpp, Lexer.hpp, Lexer.cpp)
-    ├── parser/             # Parser and AST (AST.hpp, Parser.hpp, Parser.cpp)
-    └── codegen/            # LLVM code generator (CodeGenLLVM.hpp, CodeGenLLVM.cpp)
-lexer/ – Breaks input   into tokens.
+**Built-ins:** `print(...)` maps to `printf`, `sleep(ms)` maps to `Sleep` on Windows
 
-parser/ – Builds an abstract syntax tree (AST) according to the tTek grammar.
+## Project layout
 
-codegen/ – Walks the AST and generates LLVM IR, then compiles it to an object file and links it.
+```
+src/
+  lexer/       — tokenizer
+  parser/      — AST and grammar
+  codegen/     — LLVM IR generation and linking
+examples/      — sample .ttek programs
+CMakeLists.txt
+compile.bat
+```
 
-Status
-Version 0.1 – fully working compiler, stable syntax. The language is capable of expressing reactive, low-level programs with direct memory access and real-time constraints. Contributions and feedback are welcome.
+## Status
 
-## Installation & Usage
-
-### Windows (MinGW-w64 / MSYS2)
-
-1. Install MSYS2 from https://www.msys2.org/ and open **MSYS2 UCRT64** terminal.
-2. Install required packages:
-
-pacman -S mingw-w64-ucrt-x86_64-llvm mingw-w64-ucrt-x86_64-gcc cmake make git
-
-Clone the repository:
-    
-git clone https://github.com/RobEst0906/tTek-language.git
-cd tTek-language
-Build and run a tTek program (one command):
-
-powershell:
-.\compile.bat examples\smart_home.ttek
-
-The batch file will create a build folder, compile the compiler (if needed), translate your .ttek to an executable, and run it immediately.
-
-To compile manually without the script:
-
-powershell:
-mkdir build
-cd build
-cmake .. -G "MinGW Makefiles"
-mingw32-make
-cd ..
-.\build\ttek_compiler.exe examples\hello.ttek
-
-
-Linux
-Install dependencies (example for Ubuntu/Debian):
-
-sudo apt update
-sudo apt install build-essential cmake llvm-21-dev clang git
-(On other distributions, use the appropriate package manager and ensure LLVM 21 development libraries are present.)
-
-Clone and build:
-
-git clone https://github.com/RobEst0906/tTek-language.git
-cd tTek-language
-mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
-make
-cd ..
-Compile and run a tTek program:
-
-./build/ttek_compiler examples/hello.ttek
-./examples/hello
-(The compiler generates an object file and automatically links it with gcc. If you prefer clang, edit the link command in src/codegen/CodeGenLLVM.cpp.)
+v0.1 — works, but rough around the edges. Core features (rules, functions, if/while, print, sleep, halt) are stable. Some things in the spec aren't fully implemented yet (inline asm, atomic rules, trigger). Contributions welcome.
