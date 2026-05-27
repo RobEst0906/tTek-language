@@ -1,0 +1,16 @@
+init {
+    mem count: i32 = 0;
+    mem running: i32 = 1;
+    print("tTek language test\n");
+}
+
+rule tick every "1s" when running == 1 {
+    count = count + 1;
+    print("Tick: %d\n", count);
+    sleep(1000);
+}
+
+rule done when count >= 5 {
+    print("Done! count = %d\n", count);
+    halt;
+}

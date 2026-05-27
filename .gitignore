@@ -1,0 +1,16 @@
+
+build/
+
+*.o
+*.obj
+*.exe
+
+compile_commands.json
+
+.vs/
+.vscode/
+*.user
+*.suo
+
+Thumbs.db
+Desktop.ini

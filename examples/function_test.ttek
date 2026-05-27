@@ -1,0 +1,15 @@
+fn factorial(n: i32): i32 {
+    if (n <= 1) {
+        return 1;
+    }
+    return n * factorial(n - 1);
+}
+
+fn add(a: i32, b: i32): i32 {
+    return a + b;
+}
+
+init {
+    print("5! = %d\n", factorial(5));
+    print("3 + 4 = %d\n", add(3, 4));
+}

@@ -1,0 +1,54 @@
+tTek Syntax Specification v0.1
+
+Program structure:
+  <global variables, optional>
+  <init block>
+  <rules and functions, optional>
+
+Global variables:
+  ( "mem" | "reg" ) name ":" type [ "=" expression ] ";"
+  Types: i8, i16, i32, i64, u8, u16, u32, u64, f32, f64, ptr <type>, <type>[], void
+
+Init block:
+  "init" block   (runs once at startup)
+
+Rules:
+  "rule" [name] [ "priority" integer ] [ "atomic" ] [ "every" time_string ]
+  "when" expression
+  block
+
+  Rules are evaluated continuously. When condition is true, body executes.
+  If "every" is given, rule fires at most once per interval (e.g., "1s", "500ms").
+  Priority: lower number = higher priority (default 128).
+  "atomic" body runs without interruption.
+
+Functions:
+  "fn" name "(" [ params ] ")" [ ":" return_type ] block
+  params: name ":" type { "," name ":" type }
+  Return type defaults to void.
+
+Expressions:
+  operators: + - * / %   == != < > <= >=   && ||   ! ~ & *   . -> []   =
+  * перед выражением – разыменование, & – взятие адреса.
+  print(...) автоматически отображается на printf(...).
+
+Statements:
+  variable declaration:  ( "mem" | "reg" ) name ":" type [ "=" expr ] ";"
+  if ( expr ) block [ else ( block | if_stmt ) ]
+  while ( expr ) block
+  return [ expr ] ;
+  halt ;
+  nop ;
+  trigger name ;
+  expr = expr ;
+  name ( [ args ] ) ;
+  expr ;
+
+Comments:
+  // single line
+  /* multi-line */
+
+Built-in functions:
+  print   -> printf
+  sleep   -> sleep (milliseconds, platform-dependent: Windows Sleep, POSIX usleep)
+  halt    -> exit(0)

@@ -1,0 +1,32 @@
+mem ticks: i32 = 0;
+mem reset_flag: i32 = 0;
+mem print_interval: i32 = 0;
+
+init {
+    print("System started\n");
+    print_interval = 10;
+}
+
+rule ticker every "1s" when ticks < 100 {
+    ticks = ticks + 1;
+    if (print_interval == 0) {
+        print("Tick: %d\n", ticks);
+        print_interval = 10;
+    }
+    print_interval = print_interval - 1;
+}
+
+rule watchdog every "5s" when ticks > 0 && ticks < 100 {
+    print("Watchdog: ticks=%d\n", ticks);
+}
+
+rule alarm when ticks >= 100 {
+    print("ALARM! Ticks reached 100\n");
+    halt;
+}
+
+rule reset_cmd when reset_flag == 1 {
+    ticks = 0;
+    reset_flag = 0;
+    print("System reset\n");
+}

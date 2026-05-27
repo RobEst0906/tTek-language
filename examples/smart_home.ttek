@@ -1,0 +1,78 @@
+init {
+    mem temperature: i32 = 22;
+    mem motion: i32 = 0;
+    mem ac_on: i32 = 0;
+    mem light_on: i32 = 0;
+    mem alarm_triggered: i32 = 0;
+    mem ticks: i32 = 0;
+
+    print("Smart Home System started\n");
+    print("Temp: %d C, Motion: %d, AC: %d, Light: %d\n", temperature, motion, ac_on, light_on);
+}
+
+rule temp_up every "3s" when temperature < 30 && ac_on == 0 {
+    temperature = temperature + 1;
+    print("Temperature increased to %d\n", temperature);
+}
+
+rule temp_down every "3s" when temperature > 18 && ac_on == 1 {
+    temperature = temperature - 1;
+    print("Temperature decreased to %d\n", temperature);
+}
+
+rule motion_toggle every "5s" when alarm_triggered == 0 {
+    if (motion == 0) {
+        motion = 1;
+        print("Motion detected\n");
+    } else {
+        motion = 0;
+        print("Motion cleared\n");
+    }
+}
+
+rule ac_control when temperature > 25 && ac_on == 0 {
+    ac_on = 1;
+    print("AC turned ON (temp > 25)\n");
+}
+
+rule ac_off when temperature <= 22 && ac_on == 1 {
+    ac_on = 0;
+    print("AC turned OFF (temp <= 22)\n");
+}
+
+rule light_on_trigger when motion == 1 && light_on == 0 && alarm_triggered == 0 {
+    light_on = 1;
+    print("Light ON (motion detected)\n");
+}
+
+rule light_off_trigger when motion == 0 && light_on == 1 {
+    light_on = 0;
+    print("Light OFF (no motion)\n");
+}
+
+rule alarm_check when temperature >= 30 && ac_on == 0 {
+    if (alarm_triggered == 0) {
+        alarm_triggered = 1;
+        print("ALARM! Temperature critical, AC not working!\n");
+        motion = 0;
+        light_on = 1;
+    }
+}
+
+rule alarm_reset when alarm_triggered == 1 && temperature < 28 {
+    alarm_triggered = 0;
+    print("Alarm reset, temperature normalized\n");
+    light_on = 0;
+}
+
+rule global_tick every "1s" when 1 {
+    ticks = ticks + 1;
+    if (ticks % 10 == 0) {
+        print("Temp: %d C, Motion: %d, AC: %d, Light: %d\n", temperature, motion, ac_on, light_on);
+    }
+}
+
+rule shutdown when ticks >= 60 {
+    print("Shutting down after 60 seconds\n");
+    halt;
+}

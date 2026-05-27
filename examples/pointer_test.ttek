@@ -1,0 +1,11 @@
+mem src: i32 = 42;
+mem dst: i32 = 0;
+
+ptr src_ptr: i32 = &src;
+ptr dst_ptr: i32 = &dst;
+
+init {
+    print("Testing pointers\n");
+    *dst_ptr = *src_ptr + 10;
+    print("src = %d, dst = %d\n", src, *dst_ptr);
+}
