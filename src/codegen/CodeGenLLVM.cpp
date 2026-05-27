@@ -35,7 +35,7 @@ void CodeGenLLVM::compileToExe(const std::string& outputPath) {
         genFunction(func);
     }
 
-    // Build ttek_rules function first (before main)
+    
     llvm::Function* rulesFunc = nullptr;
     if (!m_program.rules.empty()) {
         std::vector<const Rule*> sortedRules;
@@ -69,7 +69,7 @@ void CodeGenLLVM::compileToExe(const std::string& outputPath) {
             m_builder->CreateCondBr(cond, thenBlock, elseBlock);
             m_builder->SetInsertPoint(thenBlock);
             genBlock(rule->body);
-            // Only add branch if block not already terminated (e.g. by halt)
+            
             if (!m_builder->GetInsertBlock()->getTerminator()) {
                 m_builder->CreateBr(elseBlock);
             }
@@ -186,7 +186,7 @@ llvm::Value* CodeGenLLVM::genExpr(const Expr& expr) {
         std::string funcName = e->callee;
         if (funcName == "print") funcName = "printf";
         if (funcName == "sleep") {
-            // sleep(ms) -> Sleep(DWORD ms) on Windows
+            
             llvm::Function* sleepFn = m_module->getFunction("Sleep");
             if (!sleepFn) {
                 llvm::FunctionType* ft = llvm::FunctionType::get(
