@@ -9,3 +9,5 @@ init {
     *dst_ptr = *src_ptr + 10;
     print("src = %d, dst = %d\n", src, *dst_ptr);
 }
+
+//not works in ttek 0.1!!!
